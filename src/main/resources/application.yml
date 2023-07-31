@@ -6,7 +6,7 @@ spring:
   datasource:
     driver-class-name: oracle.jdbc.driver.OracleDriver
 
-    url: jdbc:oracle:thin:@localhost:1521:xe
+    url: jdbc:oracle:thin:@192.168.0.126:1521:xe
     username: C##ALGORE
     password: ALGORE
 
