@@ -297,6 +297,7 @@ public class KitchenguideController {
         }
     }
 
+    // 해결 완료!
     @GetMapping("/trimwrite") //사용자가 get 방식으로 /kitchenguide/trimwrite를 요청할 경우 실행
     public String trimwrite() {
         return "kitchenguide/trimwrite";
@@ -306,13 +307,13 @@ public class KitchenguideController {
      *  @RequestParam : HttpServletRequest 객체와 같은 역할을 한다 (HttpServletRequest의 request.getParameter의 기능과 동일)
      *
      * "tpFileName" = html(화면) name과 동일해야 함
-     * List<MultipartFile> fileName : 클라이언트가 업로드한 파일 데이터를 받기 위한 매개변수
+     * List<MultipartFile> rpFile : 클라이언트가 업로드한 파일 데이터를 받기 위한 매개변수
      * RedirectAttributes : 리다이엑트 시에 데이터를 전달하기 위한 객체
      * */
     @PostMapping("/trimwrite") //사용자가 post 방식으로 /kitchenguide/trimwrite를 요청할 경우 실행
     @ResponseBody
     public ModelAndView insertTrim(ModelAndView mv, TrimDTO trimDTO, @RequestParam(value = "tpFileName", required = false)
-    List<MultipartFile> fileName, RedirectAttributes redirectAttributes) {
+    List<MultipartFile> rpFile, String[] tpDetail, RedirectAttributes redirectAttributes) {
         System.out.println(trimDTO == null);
         System.out.println("1");
 //      손질법 등록 확인
@@ -322,10 +323,11 @@ public class KitchenguideController {
         System.out.println("trimDetail : " + trimDTO.getTrimDetail());
         System.out.println("trimViews : " + trimDTO.getTrimViews());
         System.out.println("trimVideoLink : " + trimDTO.getTrimVideoLink());
+        System.out.println("tpDetail : " + tpDetail[0]);
         System.out.println(trimDTO); // 제목, 내용, 동영상URL ok, (번호 : 0 , 조회수 : 0, 상태 : null x)
 
-//         사진 등록 확인
-        System.out.println(fileName.get(0).getOriginalFilename());
+//      사진 등록 확인
+        System.out.println(rpFile.get(0).getOriginalFilename());
         try {
 //          현재 어플리케이션의 작업 리덱토리에서 정적 리소스 파일들을 저장할 경로를 지정
             String root = System.getProperty("user.dir") + "\\src\\main\\resources\\static\\upload\\basic\\";
@@ -333,29 +335,26 @@ public class KitchenguideController {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
 //          객체들을 저장할 리스트 생성
             List<TrimProcedureDTO> trimProcedureDTOS = new ArrayList<>();
-//          TrimDTO 객체에서 trimProcedureDTOList 필드를 가져와서 TrimProcedureDTOList 객체들을 저장
-          List<TrimProcedureDTO> trimProcedureDTOList = trimDTO.getTrimProcedureDTOList();
-//          TrimDTO 객체에서 trimNum 필드를 가져와 손질 번호 저장
-            int trimNum = trimDTO.getTrimNum();
 
-            /* 사진 로직
-             *  MultipartFile : 파일 업로드 시 클라이언트로부터 전송된 파일 데이터를 처리하는 인터페이스
-             *  리스트의 첫 번째 업로드된 파일을 가져오고 multipartFile에 할당*/
-            MultipartFile multipartFile = fileName.get(0);
-            // 업로드된 파일의 원본 파일 이름 가져오기
-            String name = multipartFile.getOriginalFilename();
-            // 이름 중복을 피하기 위해서 현재 시간을 기준으로 새로운 파일 이름 생성 (파일 이름에는 원본 파일의 확장자 포함되어 있음)
-            String tpFileNames = simpleDateFormat.format(new Date(System.currentTimeMillis()))+"."+name.substring(name.lastIndexOf(".")+1);
-            System.out.println(tpFileNames);
-            // 업로드된 파일이 로컬 저장소에 새로운 파일 이름으로 저장
-            multipartFile.transferTo(new File(root+"\\"+tpFileNames));
-
-            TrimProcedureDTO trimProcedureDTO = new TrimProcedureDTO();
-            trimProcedureDTO.getTpFileName(tpFileNames); // 새로운 파일 이름으로 설정
-            trimProcedureDTO.setTpPath("/upload/basic/"); // 이미지 경로 설정
-
-            // TrimDTO 객체의 trimProcedureDTOList에 생성한 TrimProcedureDTO 객체 추가
-            trimDTO.getTrimProcedureDTOList().add(trimProcedureDTO);
+            if (rpFile != null && tpDetail != null){
+                for (int i = 0; i < rpFile.size(); i++){
+                    System.out.println(tpDetail[i]);
+                    if(rpFile.get(i)!=null){
+                        System.out.println(tpDetail[i]);
+                        MultipartFile multipartFile = rpFile.get(i);
+                        // 업로드 된 파일의 원본 파일 이름 가져오기
+                        String originName = multipartFile.getOriginalFilename();
+                        // 이름 중복을 피하기 위해서 현재 시간을 기준으로 새로운 파일 이름 생성 (파일 이름에는 원본 파일의 확장자 포함되어 있음)
+                        String newName = simpleDateFormat.format(new Date(System.currentTimeMillis()))+"."+originName.substring(originName.lastIndexOf(".")+1);
+                        // 업로드 된 파일이 로컬 저장소에 새로운 파일 이름으로 저장
+                        multipartFile.transferTo(new File(root+"\\"+newName));
+                        // 이미지 경로 설정
+                        trimProcedureDTOS.add(new TrimProcedureDTO(newName, tpDetail[i], "/upload/basic/"));
+                    }
+                }
+            }
+            // 손질법 순서 정보 저장
+            trimDTO.setTrimProcedureDTOList(trimProcedureDTOS);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -371,21 +370,19 @@ public class KitchenguideController {
              *  view에 전달할 값 설정 (데이터 보낼 때)
              *  mv.addObject("변수 이름", "데이터 값");
              * */
-            mv.addObject("message", "등록이 완료되었습니다.");
+            redirectAttributes.addFlashAttribute("message", "등록이 완료되었습니다.");
             /* 응답할 view 이름 설정
              *  mv.setViewName("뷰의 경로");*/
-            mv.setViewName("redirect:kitchenguide/trimread");
+            mv.setViewName("redirect:/kitchenguide/mainview");
         } else {
             /* 손질법 등록 실패
              * result가 0보다 크지 않을 때
              * */
-            mv.addObject("message", "등록에 실패하였습니다.");
-            mv.setViewName("redirect:kitchenguide/trimread");
+            redirectAttributes.addFlashAttribute("message", "등록에 실패하였습니다.");
+            mv.setViewName("redirect:/kitchenguide/trimread");
         }
         return mv;
     }
-
-
 
 
     /*

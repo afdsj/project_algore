@@ -51,22 +51,14 @@ public class KitchenguideService {
             List<TrimProcedureDTO> trimProcedureDTOList = trimDTO.getTrimProcedureDTOList();
             /* trimProcedureDTOList null이 아니고 값이 비어있지 않을 경우 실행*/
             if (trimProcedureDTOList != null && !trimProcedureDTOList.isEmpty()) {
-                /* 손질법 순서 반복*/
-                for (TrimProcedureDTO trimProcedure : trimProcedureDTOList) {
-                    /* 손질법 순서 객체의 trimNum을 손질법 등록 후에 발급받은 해당 손질법의 번호(result)로 설정
-                     * 손질법 순서 객체와 손질법 게시글 연결
-                     * */
-                    trimProcedure.setTrimNum(result);
-                    /* mapper에 있는 insertTrimProduce 메서드 호출*/
-                    mapper.insertTrimProduce(trimProcedureDTOList);
-                }
+                /* mapper에 있는 insertTrimProduce 메서드 호출*/
+                result = mapper.insertTrimProduce(trimProcedureDTOList);
             }
-            /* 손질법 등록 결과 반환 -> 등록 결과를 호출한 곳으로 전달*/
-            return result;
         }
-        /* n번째 손질법 등록 결과 반환 -> 등록 되지 않았거나 실패했을 경우 등록 결과를 호출한 곳으로 전달*/
+        /* 손질법 등록 결과 반환 -> 등록 결과를 호출한 곳으로 전달*/
         return result;
     }
+
 
     public int trimPostViewCount(int trimNum/* 조회수를 증가시킬 손질법 게시글의 번호*/) {
         /* mapper에 있는 trimPostViewCount 메서드 호출해서 result에 결과 담기*/

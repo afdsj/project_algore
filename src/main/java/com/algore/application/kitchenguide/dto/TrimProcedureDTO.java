@@ -23,6 +23,13 @@ public class TrimProcedureDTO {
         this.inputFile = inputFile;
     }
 
+    public TrimProcedureDTO(String tpFileName, String tpDetail, String tpPath) {
+        this.tpFileName = tpFileName;
+        this.tpDetail = tpDetail;
+        this.tpPath = tpPath;
+
+    }
+
     public int getTpStepNum() {
         return tpStepNum;
     }
